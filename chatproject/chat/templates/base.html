@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Chat{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>/* Chat message styles */
+    .messages {
+      height: 70vh;
+      overflow-y: auto;
+      padding: 0.5rem;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 0.75rem;
+    }
+    
+    /* Generic message bubble */
+    .msg {
+      padding: 0.5rem 0.75rem;
+      border-radius: 1rem;
+      margin-bottom: 0.5rem;
+      max-width: 75%;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    /* Current user (align right, blue bubble) */
+    .msg.me {
+      margin-left: auto;
+      background: #e7f3ff;
+      text-align: right;
+    }
+    
+    /* Other users (align left, gray bubble) */
+    .msg.them {
+      margin-right: auto;
+      background: #f1f1f1;
+      text-align: left;
+    }
+    
+    /* Small text for username + timestamp */
+    .msg small {
+      display: block;
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+  <div class="container">
+    <a class="navbar-brand" href="{% url 'chat:room_list' %}">StarPulse</a>
+    <div class="d-flex">
+      {% if user.is_authenticated %}
+        <span class="me-2 pt-3 text-white bg-dark">Hello, {{ user.username }}</span>
+        <form method="post" action="{% url 'logout' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger m-2">Logout</button>
+        </form>        
+      {% else %}
+        <a class="btn btn-primary btn-sm" href="{% url 'chat:signup' %}">Sign up</a>
+        <a class="btn btn-outline-primary btn-sm ms-2" href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+{% if messages %}
+  {% for message in messages %}
+    {% if forloop.last and "success" in message.tags %}
+      <div class="alert alert-dark alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="container py-4">
+  {% block content %}{% endblock %}
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

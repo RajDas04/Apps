@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4 text-white">
+  <h3>Members of {{ room.name }}</h3>
+
+  <ul class="list-group">
+    <li class="list-group-item text-white d-flex justify-content-between align-items-center">
+      {{ room.creator.username }}
+      <span class="badge bg-primary">Creator</span>
+    </li>
+
+    {% if is_creator %}
+      {% for u in users %}
+        <li class="list-group-item text-white d-flex justify-content-between align-items-center">
+          {{ u.username }}
+          <form method="post" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" value="{{ u.id }}">
+            {% if u in room.members.all %}
+              <button name="action" value="remove" class="btn btn-sm btn-danger">Remove</button>
+            {% else %}
+              <button name="action" value="add" class="btn btn-sm btn-success">Add</button>
+            {% endif %}
+          </form>
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No other users found</li>
+      {% endfor %}
+    {% else %}
+      {% for m in room.members.all %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ m.username }}
+          {% if m == user %}
+            <span class="badge bg-info">You</span>
+          {% endif %}
+        </li>
+      {% empty %}
+        <li class="list-group-item text-muted">No members yet</li>
+      {% endfor %}
+    {% endif %}
+  </ul>
+
+  {% if is_creator %}
+    <button type="button" class="btn btn-outline-danger mt-3" data-bs-toggle="modal" data-bs-target="#deleteRoomModal">
+      Delete Room
+    </button>
+
+      <div class="modal fade" id="deleteRoomModal" tabindex="-1" aria-labelledby="deleteRoomModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header border-danger text-white">
+            <h5 class="modal-title" id="deleteRoomModalLabel">Confirm Room Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete <strong>{{ room.name }}</strong>? 
+            All messages and memberships will be lost.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <form method="post" action="{% url 'chat:delete_room' room.slug %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <a href="{% url 'chat:room' room.slug %}" class="btn btn-secondary mt-3">Back to Chat</a>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room.name }} - Chat{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h4 class="m-1 text-light bg-dark ">{{ room.name }}</h4>
+    {% if user == room.creator %}
+    <a href="{% url 'chat:members_view' room.slug %}" class="btn btn-dark">
+      Manage Room
+    </a>
+    {% elif user in room.members.all %}
+    <a href="{% url 'chat:members_view' room.slug %}" class="btn btn-dark">
+      View Members
+    </a>
+    {% endif %}
+    </div>
+    <div id="messages" class="messages mb-3 bg-dark">
+      {% for m in messages %}
+        <div class="msg {% if m.user == user %}me{% else %}them{% endif %} text-dark" data-id="{{ m.id }}">
+          <small class="text-muted-dark">{{ m.user.username }} • {{ m.created_at }}</small>
+          <div class="text-dark">{{ m.content|linebreaksbr }}</div>
+        </div>
+      {% empty %}
+        <p class="text-muted">No messages yet</p>
+      {% endfor %}
+    </div>
+
+    <form class="d-flex justify-content-between align-items-center" id="message-form">
+      {% csrf_token %}
+      {{ form.content }}
+      <button type="submit" class="btn btn-primary m-1 p-3">Send</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const form = document.getElementById('message-form');
+const messagesEl = document.getElementById('messages');
+
+function getCsrfToken() {
+  return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch("{% url 'chat:room_post_message' room.slug %}", {
+      method: "POST",
+      headers: { 'X-CSRFToken': getCsrfToken() },
+      body: formData
+    });
+
+    if (res.ok) {
+      const msg = await res.json();
+      appendMessage(msg, "{{ user.username }}");
+      form.reset();
+      scrollToBottom();
+    } else {
+      console.error("Message failed:", await res.text());
+    }
+  } catch (err) {
+    console.error("Error sending message:", err);
+  }
+});
+
+async function poll() {
+  try {
+    const lastId = getLastId();
+    const res = await fetch("{% url 'chat:room_messages_json' room.slug %}?last_id=" + lastId);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.messages && data.messages.length) {
+        data.messages.forEach(m => appendMessage(m, "{{ user.username }}"));
+        scrollToBottom();
+      }
+    }
+  } catch (err) {
+    console.error("Polling error:", err);
+  } finally {
+    setTimeout(poll, 2000);
+  }
+}
+
+function getLastId() {
+  const last = messagesEl.querySelector('[data-id]:last-child');
+  return last ? Number(last.getAttribute('data-id')) : 0;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function appendMessage(m, currentUser) {
+  const div = document.createElement('div');
+  div.classList.add('msg');
+  if (m.user === currentUser) {
+    div.classList.add('me','text-dark');
+  } else {div.classList.add('them', 'text-dark');}
+  div.setAttribute('data-id', m.id);
+  div.innerHTML = `<small class="text-muted-dark d-block">${m.user} • ${formatDate(m.created_at)}</small>
+                 <div>${m.content}</div>`;
+  messagesEl.appendChild(div);
+}
+
+scrollToBottom();
+poll();
+</script>
+<script>
+  const textarea = document.getElementById('message-input');
+  
+  textarea.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+  });
+</script>  
+{% endblock %}
