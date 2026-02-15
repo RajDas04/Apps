@@ -1,9 +1,11 @@
-For App development and deployment
+#### For App development and deployment
 # Codes for Apps
 
-### This repo is consists of materials for projects
+## This repo is consists of deployed projects
 
-#### 1.Chatapp (https://starpulse.onrender.com)
-#### 2.
+>## List of Apps
+>>### 1. [Chatapp](https://starpulse.onrender.com)
 
 
+
+Note: Any improvement/change suggestions are appreciated.
