@@ -9,7 +9,7 @@ from .forms import MessageForm, RoomForm
 from django.utils.text import slugify
 from django.contrib.auth import get_user_model
 from django.contrib import messages
-from django.utils.dateformat import format
+from django.db.models import Q
 
 User = get_user_model()
 
@@ -28,8 +28,8 @@ def signup(request):
 
 @login_required
 def room_list(request):
-    """Show all available chat rooms."""
-    rooms = Room.objects.all()
+    """Show all available chat rooms where the user is memeber or creator."""
+    rooms = Room.objects.filter(Q(creator= request.user) | Q(members= request.user)).distinct()
     return render(request, 'room_list.html', {'rooms': rooms})
 
 
@@ -66,8 +66,10 @@ def room_messages_json(request, slug):
     qs = room.messages.filter(id__gt=last_id).select_related('user').order_by('created_at')
     data = {
         "messages": [
-            {"id": m.id, "user": m.user.username, "content": m.content,"created_at": format(m.created_at, "M d, Y, P"),}
-            for m in qs]}
+            {"id": m.id, "user": m.user.username, "content": m.content, "created_at":  m.created_at.isoformat(),}
+            for m in qs
+        ]
+    }
     return JsonResponse(data)
 
 #Handle AJAX POST
@@ -140,12 +142,15 @@ def members_view(request, slug):
             elif action == 'remove':
                 room.members.remove(target)
                 messages.info(request, f'{target.username} removed from the room.')
+    
     users = User.objects.exclude(id=room.creator.id)
+    member_ids = set(room.members.values_list('id', flat=True))
 
     return render(request, 'manage_members.html', {
         'room': room,
         'users': users,
         'is_creator': is_creator,
+        'member_ids': member_ids,
     })
 
 

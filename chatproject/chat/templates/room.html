@@ -110,13 +110,18 @@ function formatDate(dateStr) {
 
 function appendMessage(m, currentUser) {
   const div = document.createElement('div');
-  div.classList.add('msg');
-  if (m.user === currentUser) {
-    div.classList.add('me','text-dark');
-  } else {div.classList.add('them', 'text-dark');}
+  div.classList.add('msg', m.user === currentUser ? 'me' : 'them', 'text-dark');
   div.setAttribute('data-id', m.id);
-  div.innerHTML = `<small class="text-muted-dark d-block">${m.user} • ${formatDate(m.created_at)}</small>
-                 <div>${m.content}</div>`;
+
+  const meta = document.createElement('small');
+  meta.classList.add('text-muted-dark', 'd-block');
+  meta.textContent = `${m.user} • ${formatDate(m.created_at)}`;
+
+  const body = document.createElement('div');
+  body.textContent = m.content;
+
+  div.appendChild(meta);
+  div.appendChild(body);
   messagesEl.appendChild(div);
 }
 

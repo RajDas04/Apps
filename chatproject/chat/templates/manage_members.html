@@ -16,7 +16,7 @@
           <form method="post" style="margin:0;">
             {% csrf_token %}
             <input type="hidden" name="user_id" value="{{ u.id }}">
-            {% if u in room.members.all %}
+            {% if u.id in member_ids %}
               <button name="action" value="remove" class="btn btn-sm btn-danger">Remove</button>
             {% else %}
               <button name="action" value="add" class="btn btn-sm btn-success">Add</button>
