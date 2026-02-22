@@ -17,5 +17,5 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'chatproject.settings')
 
 application = ProtocolTypeRouter({
     'http' : get_asgi_application(), # for django to handle to normal http
-    'websocket' : AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)) # for channels to handle websockets
+    'websocket' : AuthMiddlewareStack(URLRouter(chat.routing.websocket_urlpatterns)), # for channels to handle websockets
     })
