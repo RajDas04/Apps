@@ -37,7 +37,7 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}
+{% comment %} {% block extra_js %}
 <script>
 const form = document.getElementById('message-form');
 const messagesEl = document.getElementById('messages');
@@ -136,4 +136,83 @@ poll();
     this.style.height = (this.scrollHeight) + 'px';
   });
 </script>  
+{% endblock %} {% endcomment %}
+
+{% block extra_js %}
+<script>
+const messagesEl = document.getElementById('messages');
+const form = document.getElementById('message-form');
+const currentUser = "{{ user.username }}";
+
+// --- WebSocket setup ---
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/rooms/{{ room.slug }}/`);
+
+socket.onopen = () => console.log('WebSocket connected');
+
+socket.onclose = (e) => {
+  console.log('WebSocket disconnected, attempting reconnect...');
+  setTimeout(() => window.location.reload(), 3000);  // simple reconnect strategy
+};
+
+socket.onerror = (err) => console.error('WebSocket error:', err);
+
+socket.onmessage = (e) => {
+  const msg = JSON.parse(e.data);
+  appendMessage(msg);
+  scrollToBottom();
+};
+
+// --- Send message ---
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const textarea = form.querySelector('textarea');
+  const content = textarea.value.trim();
+
+  if (!content || socket.readyState !== WebSocket.OPEN) return;
+
+  socket.send(JSON.stringify({ content }));
+  textarea.value = '';
+  textarea.style.height = 'auto';  // reset auto-expand
+});
+
+// --- Helpers ---
+function scrollToBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit"
+  });
+}
+
+function appendMessage(m) {
+  const div = document.createElement('div');
+  div.classList.add('msg', m.user === currentUser ? 'me' : 'them', 'text-dark');
+  div.setAttribute('data-id', m.id);
+
+  const meta = document.createElement('small');
+  meta.classList.add('text-muted-dark', 'd-block');
+  meta.textContent = `${m.user} • ${formatDate(m.created_at)}`;
+
+  const body = document.createElement('div');
+  body.textContent = m.content;
+
+  div.appendChild(meta);
+  div.appendChild(body);
+  messagesEl.appendChild(div);
+}
+
+// --- Auto-expand textarea ---
+const textarea = document.getElementById('message-input');
+textarea.addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = this.scrollHeight + 'px';
+});
+
+scrollToBottom();
+</script>
 {% endblock %}
