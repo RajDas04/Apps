@@ -2,8 +2,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login as auth_login
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 from .models import Room
 from .forms import MessageForm, RoomForm
 from django.utils.text import slugify
@@ -39,15 +37,6 @@ def room_view(request, slug):
     if request.user != room.creator and request.user not in room.members.all():
         return redirect('chat:room_list')
 
-    # if request.method == 'POST':
-    #     form = MessageForm(request.POST)
-    #     if form.is_valid():
-    #         msg = form.save(commit=False)
-    #         msg.user = request.user
-    #         msg.room = room
-    #         msg.save()
-    #         return redirect('chat:room', slug=room.slug)
-    # else:
     form = MessageForm()
 
     messages = room.messages.select_related('user')
@@ -56,44 +45,6 @@ def room_view(request, slug):
         'messages': messages,
         'form': form,
     })
-
-# @login_required
-# def room_messages_json(request, slug):
-#     room = get_object_or_404(Room, slug=slug)
-#     if request.user != room.creator and request.user not in room.members.all():
-#         return JsonResponse({'error': 'Not allowed'}, status=403)
-#     last_id = int(request.GET.get('last_id', 0))
-#     qs = room.messages.filter(id__gt=last_id).select_related('user').order_by('created_at')
-#     data = {
-#         "messages": [
-#             {"id": m.id, "user": m.user.username, "content": m.content, "created_at":  m.created_at.isoformat(),}
-#             for m in qs
-#         ]
-#     }
-#     return JsonResponse(data)
-
-# #Handle AJAX POST
-# @login_required
-# @require_POST
-# def room_post_message(request, slug):
-#     room = get_object_or_404(Room, slug=slug)
-
-#     if request.user != room.creator and request.user not in room.members.all():
-#         return JsonResponse({'error': 'Not allowed'}, status=403)
-
-#     form = MessageForm(request.POST)
-#     if form.is_valid():
-#         msg = form.save(commit=False)
-#         msg.user = request.user
-#         msg.room = room
-#         msg.save()
-#         return JsonResponse({
-#             'id': msg.id,
-#             'user': msg.user.username,
-#             'content': msg.content,
-#             'created_at': msg.created_at.isoformat(),
-#         })
-#     return JsonResponse({'errors': form.errors}, status=400)
 
 @login_required
 def create_room(request):
