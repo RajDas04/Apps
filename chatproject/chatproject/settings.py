@@ -87,7 +87,7 @@ CHANNEL_LAYERS = {
     'default':{
         'BACKEND' : 'channels_redis.core.RedisChannelLayer',
         'CONFIG' : {
-            'hosts': [os.environ.get('redis://red-d6fjh96mcj7s73bhm4c0:6379', 'redis://localhost:6379')],
+            'hosts': [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
             'capacity': 100,
             'expiry': 60,
         },
@@ -104,7 +104,7 @@ if os.environ.get('RENDER_EXTERNAL_HOSTNAME'):
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASE_URL = os.environ.get('postgresql://starpulse_db_user:MC7eidj3cqJ3tm31tmlTzasxKgkOe3eT@dpg-d6fjeksr85hc73becff0-a/starpulse_db')
+DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL: # if database url is provided, use it or default to sqlite
     DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
 else:
