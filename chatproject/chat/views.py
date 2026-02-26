@@ -117,4 +117,4 @@ def delete_room(request, slug):
         messages.success(request, f'Room "{room_name}" was deleted successfully.')
         return redirect('chat:room_list')
 
-    return render(request, 'chat:manage_members', slug=room.slug)
+    return redirect('chat:members_view', slug=room.slug)
