@@ -1,0 +1,83 @@
+.search-hero {
+    min-height: 48vh;
+    display: flex;
+    align-items: center;
+}
+
+.search-shell {
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.search-title {
+    letter-spacing: 0.5px;
+}
+
+.search-form {
+    background: var(--bs-body-bg);
+    border: none;
+    border-radius: 999px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    padding: 0.35rem;
+}
+
+.search-form .input-group {
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.search-form .input-group-text {
+    background: transparent;
+    border: none;
+    padding-left: 1.25rem;
+    color: #adb5bd;
+}
+
+.search-form .search-input {
+    border: none;
+    box-shadow: none !important;
+    background: transparent;
+    font-size: 1.05rem;
+    padding: 1rem 1.25rem 1rem 0.5rem;
+}
+
+.search-btn {
+    border-radius: 999px;
+    padding: 0.9rem 1.5rem;
+    min-width: 150px;
+    margin-top: 0.5rem;
+}
+
+.results-wrap {
+    margin-top: 1.5rem;
+}
+
+.product-thumb {
+    height: 180px;
+    object-fit: contain;
+    padding: 1rem;
+    background: rgba(255,255,255,0.03);
+}
+
+.product-name {
+    min-height: 48px;
+}
+
+.track-btn {
+    width: 100%;
+}
+
+.auth-panel {
+    background: url('/static/images/login.jpg') no-repeat;
+    background-size: contain;
+    background-size: 95%;
+    background-position: bottom center;
+}
+
+.auth-panel-sign {
+    background: url('/static/images/signin.jpg') no-repeat;
+    background-size: contain;
+    background-size: 95%;
+    background-position: bottom center;
+}

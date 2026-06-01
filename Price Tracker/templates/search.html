@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+    <div class="search-hero">
+        <div class="search-shell text-center">
+            <h2 class="display-7 fw-bold mb-3 search-title">
+                Discover products and track prices
+            </h2>
+            <form id="search-form"
+                class="search-form"
+                hx-get="/api/search"
+                hx-trigger="submit"
+                hx-target="#results"
+                hx-swap="innerHTML"
+                hx-indicator="#loading"
+                hx-params="q"
+                hx-on::before-request="
+                if(!document.getElementById('search-input').value.trim()){
+                    event.preventDefault()}">
+                <div class="input-group bg-body-tertiary mb-1">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text"
+                            id="search-input"
+                            name="q"
+                            required
+                            hx-validate="true"
+                            class="form-control search-input"
+                            placeholder="Enter Product Name...">
+                </div>
+                <button type="submit" class="btn btn-warning search-btn fw-semibold fs-5 m-1 p-1 w-25">
+                    Search
+                </button>
+            </form>
+        </div>
+    </div>
+    <div class="d-flex justify-content-center">
+        <div id="loading" class=" htmx-indicator spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <div id="results" class="results-wrap">
+        <!--HTMX results here-->
+    </div>
+    
+</div>
+
+<script>
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.track-btn');
+        if (!btn) return;
+        trackProduct(btn.dataset.name, btn.dataset.id);
+    });
+    function trackProduct(name, platformId) {
+        fetch('/products', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ name: name, data_id: platformId })
+        }).then(r => {
+            if (r.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                alert('You need to be Logged in to start tracking.');
+            }
+        });
+    }
+</script>
+
+{% endblock %}

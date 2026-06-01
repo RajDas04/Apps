@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+    <div class="card auth-card shadow-lg border-0 mx-auto overflow-hidden">
+        <div class="row g-0">
+            <div class="col-md-5 auth-panel-sign d-flex flex-column justify-content-between p-4 p-md-5 text-white">
+                <div>
+                    <h2 class="fw-bold mb-3" id="panel-title">Create your account</h2>
+                    <p class="mb-0 opacity-75" id="panel-desc">
+                        Save products, track price drops, and get alerted when the right deal appears. Join Us Today.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-7 bg-body-tertiary p-4 p-md-5">
+                <div id="register-step">
+                    <h3 class="fw-bold mb-4">Register</h3>
+                    <form class="auth-form"
+                        hx-post="/auth/signin/request"
+                        hx-ext="json-enc"
+                        hx-swap="none"
+                        hx-on::after-request="handleRequestOTP(event)">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold fs-6">Email</label>
+                            <input type="email" id="reg-email" name="email"
+                                class="form-control form-control-lg fw-semibold fs-5"
+                                placeholder="Enter your email" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Password</label>
+                            <div class="position-relative">
+                                <input type="password" id="password" name="password"
+                                    class="form-control form-control-lg fw-semibold fs-5 pe-5"
+                                    placeholder="Enter new password" required>
+                                <button class="btn position-absolute end-0 top-50 translate-middle-y me-1"
+                                        type="button" id="togglePassword" aria-label="Toggle password visibility">
+                                    <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold fs-5 bi-envelope-check">
+                             Send Verification Code
+                        </button>
+                    </form>
+                    <p class="auth-switch mt-4 mb-0">
+                        Already have an account? <a class="text-info px-1" style="text-decoration: none;" href="/login">Login</a>
+                    </p>
+                    <div id="reg-error-msg" class="text-danger my-2 py-1" style="display:none;">
+                        Looks like the details you entered are not valid.
+                    </div>
+                </div>
+                <div id="otp-step" style="display:none;"> <!--otp-->
+                    <h3 class="fw-bold mb-2">Verify your email</h3>
+                    <p class="text-muted mb-4 fs-6">
+                        Enter the 6-digit code sent to
+                        <span id="otp-email-display" class="text-info fw-semibold"></span>
+                    </p>
+                    <form class="auth-form"
+                        hx-post="/auth/signin/verify"
+                        hx-ext="json-enc"
+                        hx-swap="none"
+                        hx-on::after-request="handleVerifyOTP(event)">
+
+                        <input type="hidden" id="hidden-email" name="email">
+                        <input type="hidden" id="otp-code" name="otp">
+                        <div class="d-flex gap-2 justify-content-center mb-4">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;" autocomplete="one-time-code">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;">
+                            <input type="text" inputmode="numeric" maxlength="1"
+                                class="form-control form-control-lg text-center fw-bold fs-3 otp-digit"
+                                style="width:52px; height:58px;">
+                        </div>
+                        <button type="submit" id="verify-btn"
+                                class="btn btn-primary btn-lg w-100 fw-semibold fs-5 bi-check-circle"
+                                disabled>
+                             Verify &amp; Create Account
+                        </button>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <span class="text-muted small">Didn't receive the code?</span>
+                        <button id="resend-btn" class="btn btn-link text-info p-0 ms-1 fw-semibold small"
+                                onclick="resendOTP()" disabled>
+                            Resend
+                        </button>
+                        <span id="resend-timer" class="text-muted small"></span>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <button class="btn btn-link text-muted p-0 small" onclick="goBack()">
+                            ← Use a different email
+                        </button>
+                    </div>
+                    <div id="otp-error-msg" class="text-danger my-2 py-1" style="display:none;">
+                        Invalid or expired code. Please try again.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+<script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+        const input = document.getElementById('password');
+        const icon  = document.getElementById('togglePasswordIcon');
+        const isHidden = input.type === 'password';
+        input.type = isHidden ? 'text' : 'password';
+        icon.classList.toggle('bi-eye');
+        icon.classList.toggle('bi-eye-slash');
+    });
+    const otpDigits  = document.querySelectorAll('.otp-digit');
+    const otpHidden  = document.getElementById('otp-code');
+    const verifyBtn  = document.getElementById('verify-btn');
+
+    function syncOTP() {
+        const otp = [...otpDigits].map(i => i.value).join('');
+        otpHidden.value  = otp;
+        verifyBtn.disabled = otp.length !== 6;
+    }
+    otpDigits.forEach((input, idx) => {
+        input.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').slice(-1); // digits only, 1 char
+            if (this.value && idx < otpDigits.length - 1) {
+                otpDigits[idx + 1].focus();
+            }
+            syncOTP();
+        });
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Backspace' && !this.value && idx > 0) {
+                otpDigits[idx - 1].focus();
+            }
+        });
+
+        input.addEventListener('paste', function (e) {
+            e.preventDefault();
+            const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+            pasted.split('').forEach((char, i) => {
+                if (otpDigits[i]) otpDigits[i].value = char;
+            });
+            syncOTP();
+            const next = pasted.length < 6 ? pasted.length : 5;
+            otpDigits[next].focus();
+        });
+    });
+    function handleRequestOTP(event) {
+        if (event.detail.successful) {
+            const email = document.getElementById('reg-email').value;
+            document.getElementById('hidden-email').value      = email;
+            document.getElementById('otp-email-display').textContent = email;
+
+            document.getElementById('register-step').style.display = 'none';
+            document.getElementById('otp-step').style.display      = 'block';
+
+            document.getElementById('panel-title').textContent = 'One last step!';
+            document.getElementById('panel-desc').textContent  =
+                'Check your inbox for a 6-digit verification code. It expires in 10 minutes.';
+
+            clearOTPInputs();
+            startResendTimer();
+            otpDigits[0].focus();
+        } else {
+            document.getElementById('reg-error-msg').style.display = 'block';
+        }
+    }
+    function handleVerifyOTP(event) {
+        if (!event.detail.successful) {
+            document.getElementById('otp-error-msg').style.display = 'block';
+            clearOTPInputs();
+            otpDigits[0].focus();
+        }
+    }
+    function goBack() {
+        document.getElementById('otp-step').style.display      = 'none';
+        document.getElementById('register-step').style.display = 'block';
+        document.getElementById('panel-title').textContent     = 'Create your account';
+        document.getElementById('panel-desc').textContent      =
+            'Save products, track price drops, and get alerted when the right deal appears. Join Us Today.';
+        document.getElementById('reg-error-msg').style.display = 'none';
+        clearOTPInputs();
+    }
+    function clearOTPInputs() {
+        otpDigits.forEach(i => i.value = '');
+        otpHidden.value    = '';
+        verifyBtn.disabled = true;
+    }
+    function resendOTP() {
+        const email    = document.getElementById('hidden-email').value;
+        const password = document.getElementById('password').value;
+
+        fetch('/auth/signin/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        }).then(r => {
+            if (r.ok) {
+                clearOTPInputs();
+                document.getElementById('otp-error-msg').style.display = 'none';
+                startResendTimer();
+                otpDigits[0].focus();
+            }
+        });
+    }
+    let timerInterval;
+    function startResendTimer() {
+        const btn      = document.getElementById('resend-btn');
+        const timerEl  = document.getElementById('resend-timer');
+        let seconds    = 60;
+
+        btn.disabled       = true;
+        timerEl.textContent = `(${seconds}s)`;
+        clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            seconds--;
+            timerEl.textContent = seconds > 0 ? `(${seconds}s)` : '';
+            if (seconds <= 0) {
+                clearInterval(timerInterval);
+                btn.disabled = false;
+            }
+        }, 1000);
+    }
+</script>
+
+{% endblock %}

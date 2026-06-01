@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container py-5">
+  <div class="card auth-card shadow-lg border-0 mx-auto overflow-hidden">
+    <div class="row g-0">
+      <div class="col-md-5 auth-panel d-flex flex-column justify-content-between p-4 p-md-5 text-white">
+        <div>
+          <h2 class="fw-bold mb-3">Welcome back!</h2>
+          <p class="mb-0 opacity-75">
+            Log in to track, save, and never miss a price drop.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-7 bg-body-tertiary p-4 p-md-5">
+        <h3 class="fw-bold mb-4">Login</h3>
+        <form class="auth-form"
+              hx-post="/auth/login/cookie"
+              hx-encoding="application/x-www-form-urlencoded"
+              hx-on::after-request="handleLogin(event)">
+          <div class="mb-3">
+            <label class="form-label fw-semibold fs-6">Email</label>
+            <input type="email" name="username"
+              class="form-control form-control-lg fw-semibold fs-5" placeholder="your@email.com" required>
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold fs-6">Password</label>
+            <div class="position-relative">
+              <input type="password" id="password" name="password"
+                        class="form-control form-control-lg fw-semibold fs-5 pe-5"
+                        placeholder="password" required>
+              <button class="btn  position-absolute end-0 top-50 translate-middle-y me-1" type="button" id="togglePassword">
+                <i class="bi bi-eye" id="togglePasswordIcon"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold fs-5 bi-box-arrow-in-right"> Login</button>
+        </form>
+        <p class="auth-switch mt-4 mb-0">
+          Don't have an account? <a class= "text-info px-1" style="text-decoration: none;" href="/signin">Register</a>
+        </p>
+        <div id="error-msg" class="text-danger my-2 py-1" style="display:none;">
+          Looks like email or password is not valid.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleLogin(event) {
+      if (!event.detail.successful) {
+      document.getElementById('error-msg').style.display = 'block';}
+  }
+  const togglePassword = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+  togglePassword.addEventListener('click', function () {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+
+      togglePasswordIcon.classList.toggle('bi-eye');
+      togglePasswordIcon.classList.toggle('bi-eye-slash');
+  });
+</script>
+
+{% endblock %}

@@ -1,3 +1,12 @@
+.env
+Notes.md
+output.txt
+output.csv
+output.html
+helper.txt
+**celerybeat**
+example.png
+
 ## pychache ignored
 __pycache__/
 **/__pycache__/

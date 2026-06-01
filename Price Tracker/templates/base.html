@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+    <head>
+        <meta charset="utf-8">
+        <title>
+            {% block title %} Price Tracker {% endblock %}
+        </title>
+        <script src="https://unpkg.com/htmx.org@2.0.1/dist/htmx.min.js"></script>
+        <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+            integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+        <link rel="stylesheet" href="/static/css/style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom" data-bs-theme="dark">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-semibold fs-4 mx-2" href="/">
+                    <img src="/static/images/pricetrackerlogo.png" alt="Bootstrap" width="35" height="28">
+                     Price Tracker
+                </a>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    {% if request.url.path in ['/login', '/signin'] %}
+                    <!--just to hide auth buttons-->
+                    {% elif user %}
+                        <a class="btn text-info fw-semibold fs-7 me-2 bi-cart3" href="/dashboard"> Products on Tracker</a>
+                        <span class="text-light small fw-semibold fs-7 me-2">It's a waiting game.</span>
+                        <button type="button" 
+                                class="btn btn-outline-danger btn-sm fw-semibold fs-6 bi-box-arrow-left" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#logoutModal"
+                                hx-disable>
+                            Logout
+                        </button>
+                    {% else %}
+                        <a href="/login" class="btn btn-outline-light btn-sm fw-semibold fs-6 bi-box-arrow-in-right"> Login</a>
+                        <a href="/signin" class="btn btn-primary btn-sm fw-semibold fs-6 bi-person-plus px-2"> Register</a>
+                    {% endif %}
+                </div>
+            </div>
+        </nav>
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="logoutModalLabel">Confirm Logout</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to logout?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <a href="/logout" class="btn btn-danger fw-semibold">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+            <div id="actionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                <span class="toast-icon me-2" id="toastIcon"></span>
+                <strong class="me-auto" id="toastTitle">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toastMessage">
+                Action completed.
+                </div>
+            </div>
+        </div>
+        
+        {% block content %}
+        {% endblock %}
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
+        </script>
+        <script>
+        // Auto refresh token every 25 minutes
+        (function() {
+            const REFRESH_INTERVAL = 25 * 60 * 1000;
+            const TOKEN_LIFETIME = 30 * 60 * 1000;
+            let lastRefresh = sessionStorage.getItem('lastTokenRefresh') || Date.now();
+            sessionStorage.setItem('lastTokenRefresh', lastRefresh);
+            lastRefresh = parseInt(lastRefresh);
+
+            async function refreshToken() {
+                try {
+                    const response = await fetch('/auth/refresh/cookie', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    if (!response.ok) throw new Error(`Refresh failed: ${response.status}`);
+                    sessionStorage.setItem('lastTokenRefresh', Date.now());
+                    return true;
+                } catch (err) {
+                    setTimeout(() => window.location.href = '/login?expired=true', 2000);
+                    return false;
+                }
+            }
+            const timeSinceLastRefresh = Date.now() - lastRefresh;
+            if (timeSinceLastRefresh >= REFRESH_INTERVAL || timeSinceLastRefresh >= (TOKEN_LIFETIME - 60000)) {
+                refreshToken();
+            }
+            setInterval(async () => {
+                const currentTime = Date.now() - parseInt(sessionStorage.getItem('lastTokenRefresh') || Date.now());
+                if (currentTime >= REFRESH_INTERVAL) await refreshToken();
+            }, 60 * 1000);
+            let activityTimeout;
+            ['mousedown', 'keydown', 'scroll', 'touchstart'].forEach(event => {
+                document.addEventListener(event, () => {
+                    clearTimeout(activityTimeout);
+                    activityTimeout = setTimeout(() => {
+                        const timeSince = Date.now() - parseInt(sessionStorage.getItem('lastTokenRefresh') || Date.now());
+                        if (timeSince >= REFRESH_INTERVAL) refreshToken();
+                    }, 1000);
+                }, { passive: true });
+            });
+        })();
+        // toast things
+        function showToast(title, message, type = 'success') {
+            const toastEl = document.getElementById('actionToast');
+            const configs = {
+                success: { icon: 'bi-check-circle-fill text-success', bg: 'bg-success-subtle' },
+                error: { icon: 'bi-exclamation-triangle-fill text-danger', bg: 'bg-danger-subtle' },
+                info: { icon: 'bi-info-circle-fill text-info', bg: 'bg-info-subtle' },
+                warning: { icon: 'bi-exclamation-circle-fill text-warning', bg: 'bg-warning-subtle' }
+            };
+            const config = configs[type] || configs.success;
+            document.getElementById('toastIcon').className = config.icon + ' me-2';
+            toastEl.querySelector('.toast-header').className = 'toast-header ' + config.bg;
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+            new bootstrap.Toast(toastEl, { animation: true, autohide: true, delay: 3000 }).show();
+        }
+        // handle url things for deleted products
+        document.addEventListener("DOMContentLoaded", function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("deleted") === "1") {
+                showToast("Deleted", "Product removed successfully", "success");
+                params.delete("deleted");
+                history.replaceState({}, "", window.location.pathname + (params.toString() ? "?" + params : ""));
+            }
+        });
+        // HTMX success handler
+        document.body.addEventListener('htmx:afterRequest', function (event) {
+            const { xhr, requestConfig, elt } = event.detail;
+            if (!xhr || xhr.status < 200 || xhr.status >= 300) return;
+            const verb = (requestConfig?.verb || '').toLowerCase();
+            const path = requestConfig?.path || '';
+            
+            if (verb === 'delete' && path.includes('/products/')) {
+                showToast('Deleted', 'Product removed successfully', 'success');
+            } else if (verb === 'post' && path.includes('/scrape/')) {
+                const originalHTML = elt.innerHTML;
+                elt.innerHTML = ' Queued';
+                elt.disabled = true;
+                showToast('Queued', 'Price update queued', 'info');
+                setTimeout(() => {
+                    elt.innerHTML = originalHTML;
+                    elt.disabled = false;
+                }, 8000);
+            } else if (verb === 'post' && path === '/products') {
+                showToast('Success', 'Product added to Tracker', 'success');
+                elt.disabled = true;
+                elt.innerHTML = ' Tracked <i class="bi-check-circle-fill"></i>';
+                elt.classList.replace('btn-warning', 'btn-success');
+            }
+        });
+        // HTMX error handler
+        document.body.addEventListener('htmx:responseError', (e) => {
+            let msg = 'An error occurred';
+            try {
+                const res = JSON.parse(e.detail.xhr.responseText);
+                msg = res.detail || res.message || msg;
+            } catch {}
+            showToast('Error', msg, 'error');
+        });
+        document.body.addEventListener('htmx:sendError', () => showToast('Network Error', 'Failed to connect', 'error'));
+        document.body.addEventListener('htmx:timeout', () => showToast('Timeout', 'Request took too long', 'warning'));
+        </script>
+    </body>
+</html>
