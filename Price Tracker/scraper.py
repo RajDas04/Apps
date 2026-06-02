@@ -37,10 +37,6 @@ class Scraper:
             self.page.wait_for_load_state("networkidle")
             
             soup = BeautifulSoup(self.page.content(), "html.parser")
-
-            # with open("output2.html", "w", encoding="utf-8") as f: # for debug
-            #     f.write(soup.prettify())
-            # ss = self.page.screenshot(path="example.png") # for debug
             return self.extract_prices(soup)
         
         except Exception as e:
@@ -91,7 +87,6 @@ class Scraper:
             soup = BeautifulSoup(self.page.content(), "html.parser")
 
             ld = json.loads(soup.find("script", type="application/ld+json").string)
-            # name = ld[0]["name"]
             price_tag = ld[0]["offers"]["price"] # it fetches directly product description so its reliable
             mrp_tag = soup.select_one('div.v1zwn21m.v1zwn21._1psv1zeb9._1psv1ze0') # but its not
 
@@ -106,19 +101,3 @@ class Scraper:
             return None
         finally:
             self.close_browser()
-
-# for testing
-if __name__ == "__main__":
-    url = "https://www.flipkart.com"
-    scraper = Scraper(url)
-    search = input("Enter the Product: ")
-    products = scraper.search_products(search)
-
-    if not products:
-        print(f"Found {len(products)} product cards but extracted 0 results. OR")
-        print("No products found. Flipkart may have changed their CSS classes — inspect the page and update the regex patterns.")
-    else:
-        for i, p in enumerate(products, 1):
-            print(f"{i}. {p['data_id']} {p['product']} — {p['price']} <- {p['mrp']}> {p['url']} | Image: {p['image_url']}")
-    # for p in products[:3]:
-    #     print(f"{p['data_id']}: {p.get('url', 'NO URL FOUND')}")

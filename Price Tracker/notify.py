@@ -1,7 +1,6 @@
 import smtplib
 from email.mime.text import MIMEText
 from config import settings
-from fastapi import HTTPException
 
 def send_email(to_email: str, product_name: str, current_price: int, previous_price: int, drop_amount: int):
     try:
@@ -62,9 +61,3 @@ def send_otp(to_email: str, otp: str):
     except Exception as e:
         print(f"OTP Email Failed: {e}")
         raise
-
-# if __name__ == "__main__":
-#     try:
-#         send_email(to_email="PUTTHEEMAILHERE", product_name="Test Product", current_price=999, threshold=1000)
-#     except Exception as e:
-#         print(f"Failed to send test email: {e}")

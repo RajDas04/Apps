@@ -37,15 +37,3 @@ class ProductOut(BaseModel):
 
     class Config:
         from_attributes = True
-
-# class AlertCreate(BaseModel):
-#     product_id: int
-#     threshold: int
- 
-# class AlertOut(BaseModel):
-#     id: int
-#     threshold: int
-#     is_active: bool
- 
-#     class Config:
-#         from_attributes = True

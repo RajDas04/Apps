@@ -43,6 +43,3 @@ class Alert(Base): # alert to email
     created_at = Column(DateTime, default= lambda: datetime.now(timezone.utc))
     product = relationship("Product", back_populates="alerts")
     is_active = Column(Boolean, default=True)
-
-# class Platform(Base):
-#     pass # for future options choosing between amazon or flipkart or other platforms

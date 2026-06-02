@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     scrape_url: str
     refresh_token_expire_days: int
     redis_url: str
-    email_from: str #for testing
-    email_password: str #for testing
+    email_from: str
+    email_password: str
 
     class Config:
         env_file = ".env"
