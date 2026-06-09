@@ -1,0 +1,106 @@
+services:
+  - type: web
+    name: price-tracker-api
+    runtime: docker
+    dockerfilePath: ./dockerfile
+    healthCheckPath: /
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: price-tracker-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: price-tracker-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: SCRAPE_URL
+        value: https://www.flipkart.com
+      - key: EMAIL_FROM
+        sync: false   # set manually in render
+      - key: EMAIL_PASSWORD
+        sync: false   # same here
+
+  - type: worker
+    name: price-tracker-celery-worker
+    runtime: docker
+    dockerfilePath: ./dockerfile
+    startCommand: celery -A tasks worker --loglevel=info --concurrency=1
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: price-tracker-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: price-tracker-redis
+          property: connectionString
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: price-tracker-api
+          envVarKey: SECRET_KEY
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: SCRAPE_URL
+        value: https://www.flipkart.com
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+
+  - type: worker
+    name: price-tracker-celery-beat
+    runtime: docker
+    dockerfilePath: ./dockerfile
+    startCommand: celery -A tasks beat --loglevel=info --scheduler celery.beat.PersistentScheduler
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: price-tracker-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: price-tracker-redis
+          property: connectionString
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: SCRAPE_URL
+        value: https://www.flipkart.com
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_PASSWORD
+        sync: false
+
+databases:
+  - name: price-tracker-db
+    databaseName: pricetracker
+    user: pricetracker_user
+    plan: free
+
+  - type: redis
+    name: price-tracker-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
