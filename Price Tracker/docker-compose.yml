@@ -1,11 +1,11 @@
-#certain info here are not actual values, but placeholders.
+# info here are not actual values, but placeholders.
 
 services:
   web:
     build: .
     ports:
       - "8000:8000"
-    env_file: .env
+    env_file: .env.example
     depends_on:
       postgres:
         condition: service_healthy
@@ -20,7 +20,7 @@ services:
   celery-worker:
     build: .
     command: celery -A tasks worker --loglevel=info --pool=solo --concurrency=1
-    env_file: .env
+    env_file: .env.example
     depends_on:
       postgres:
         condition: service_healthy
@@ -30,7 +30,7 @@ services:
   celery-beat:
     build: .
     command: celery -A tasks beat --loglevel=info --scheduler celery.beat.PersistentScheduler
-    env_file: .env
+    env_file: .env.example
     depends_on:
       postgres:
         condition: service_healthy
