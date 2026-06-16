@@ -16,7 +16,7 @@ services:
           name: price-tracker-redis
           property: connectionString
       - key: SECRET_KEY
-        generateValue: true
+        generateValue: false
       - key: ALGORITHM
         value: HS256
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
@@ -89,18 +89,17 @@ services:
       - key: SCRAPE_URL
         value: https://www.flipkart.com
       - key: EMAIL_FROM
-        sync: false
+        sync: True
       - key: EMAIL_PASSWORD
-        sync: false
+        sync: True
+  - type: keyvalue
+    name: price-tracker-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 databases:
   - name: price-tracker-db
     databaseName: pricetracker
     user: pricetracker_user
     plan: free
-
-  - type: redis
-    name: price-tracker-redis
-    plan: free
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []
