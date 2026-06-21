@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     redis_url: str
     email_from: str
     email_password: str
+    email_cli_id: str
+    email_cli_secret: str
+    email_refresh_token: str
 
     class Config:
         env_file = ".env"
