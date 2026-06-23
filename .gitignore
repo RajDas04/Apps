@@ -7,6 +7,7 @@ helper.txt
 **celerybeat**
 example.png
 .env.docker
+credentials.json
 
 ## pychache ignored
 __pycache__/
