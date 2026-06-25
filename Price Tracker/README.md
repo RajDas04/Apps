@@ -1,8 +1,8 @@
 # Price Tracker
 
-A full-stack web application that autonomously monitors Flipkart product prices, delivering instant email notifications when prices drop below user-defined thresholds. Built with enterprise-grade architecture featuring asynchronous task processing, JWT-based authentication, and intelligent scraping strategies.
+A full-stack web application that autonomously monitors Flipkart product prices, auto delivering instant email notifications when prices drop below the last thresholds. Built with enterprise-grade architecture featuring synchronous task processing, JWT-based authentication, and intelligent scraping strategies.
 
-### Live Demo Here
+### Live Demo Here(https://price-tracker-sw9c.onrender.com)
 ---
 ## Screenshots
 <img src="assets/screenshots/screenshot_1.png" alt="App Screenshot" width="350">
@@ -25,6 +25,7 @@ A full-stack web application that autonomously monitors Flipkart product prices,
 - **Password Hashing :** pwdlib with Argon2 algorithm
 - **JWT Security :** httpOnly cookies (XSS protection) + SameSite=Lax (CSRF mitigation)
 - **Token Refresh :** Separate refresh tokens with 7-day expiry
+- **OTP-Based Signin :** OTP required registration for email validation
 
 ## Tech Stack
 
@@ -48,20 +49,20 @@ A full-stack web application that autonomously monitors Flipkart product prices,
 - **Containerization :** Docker + Docker Compose
 - **Rate Limiting :** SlowAPI (10 req/min on refresh token)
 - **Email :** SMTP (Gmail integration)
+- **Deployment :** Render via Docker Image
 
 ## Layout
     price-tracker/
-    ├── app/
-    │   ├── main.py              # FastAPI app endpoints
-    │   ├── config.py            # env variable validation
-    │   ├── database.py          # DB sessions
-    │   ├── db_models.py         # all SQLAlchemy DB models
-    │   ├── schemas.py           # all Pydantic schemas
-    │   ├── crud.py              # DB operation logics
-    │   ├── auth.py              # user authorisations (login, logout, register, refresh) & JWT logic
-    │   ├── scraper.py           # scraping operations BS4 & Playwright logic
-    │   ├── tasks.py             # Celery scheduled task operations
-    │   └── notify.py            # email alert logic
+    ├── main.py                  # FastAPI app endpoints
+    ├── config.py                # env variable validation
+    ├── database.py              # DB sessions
+    ├── db_models.py             # all SQLAlchemy DB models
+    ├── schemas.py               # all Pydantic schemas
+    ├── crud.py                  # DB operation logics
+    ├── auth.py                  # user authorisations (login, logout, register, refresh) & JWT logic
+    ├── scraper.py               # scraping operations BS4 & Playwright logic
+    ├── tasks.py                 # Celery scheduled task operations
+    ├── notify.py                # email alert logic
     │
     ├── templates/               # Frontend
     │   ├── authorization
@@ -83,7 +84,10 @@ A full-stack web application that autonomously monitors Flipkart product prices,
     │   ├── Work in Progress
     │   └── 
     │
-    ├── docker-compose.yml
+    ├── entry.sh                 # entrypoint shell command for docker
+    ├── render.yaml              # Docker yaml file for render deployment
+    ├── example-docker-compose.yml# example sample for local usage
     ├── dockerfile
-    ├── README.md
+    ├── .env.example             # sample evironment variable file
+    ├── README.md                # you are here
     └── requirement.txt

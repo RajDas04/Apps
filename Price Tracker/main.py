@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from notify import send_otp
 
 # region Variables
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 router = APIRouter(prefix="/auth", tags=["auth"])
 scraper = Scraper(settings.scrape_url)
 templates = Jinja2Templates(directory="templates")
