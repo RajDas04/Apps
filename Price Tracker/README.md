@@ -84,6 +84,7 @@ A full-stack web application that autonomously monitors Flipkart product prices,
     │   ├── Work in Progress
     │   └── 
     │
+    ├── .dockerignore
     ├── entry.sh                 # entrypoint shell command for docker
     ├── render.yaml              # Docker yaml file for render deployment
     ├── example-docker-compose.yml# example sample for local usage
