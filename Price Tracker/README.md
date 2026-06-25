@@ -2,7 +2,7 @@
 
 A full-stack web application that autonomously monitors Flipkart product prices, auto delivering instant email notifications when prices drop below the last thresholds. Built with enterprise-grade architecture featuring synchronous task processing, JWT-based authentication, and intelligent scraping strategies.
 
-### Live Demo Here(https://price-tracker-sw9c.onrender.com)
+### [Live Demo Here](https://price-tracker-sw9c.onrender.com)
 ---
 ## Screenshots
 <img src="assets/screenshots/screenshot_1.png" alt="App Screenshot" width="350">
