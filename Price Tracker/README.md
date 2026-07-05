@@ -1,8 +1,10 @@
-# Price Tracker <span style="font-size: 10px;">[Cleaned & Deployed Version]</span>
+# Price Tracker
 
 A full-stack web application that autonomously monitors Flipkart product prices, auto delivering instant email notifications when prices drop below the last thresholds. Built with enterprise-grade architecture featuring synchronous task processing, JWT-based authentication, and intelligent scraping strategies.
+##### [Finalized & Deployed Version]
 
-### [Live Demo Here](https://price-tracker-sw9c.onrender.com)  <span style="font-size: 10px;"> Render may take a min or two to start up</span>
+### [Live Demo Here](https://price-tracker-sw9c.onrender.com)
+##### It might take a min or 2 to start, due to render free tier policy
 ---
 ## Screenshots
 <img src="assets/screenshots/screenshot_1.png" alt="App Screenshot" width="350">
