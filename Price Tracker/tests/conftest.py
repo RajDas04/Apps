@@ -68,7 +68,7 @@ def test_app_module(): # import main.py exactly once per test session, after sys
     return main_module
 
 @pytest.fixture()
-def test_db_session(app_module): # fresh schema for every test, create yield and drop
+def test_db_session(test_app_module): # fresh schema for every test, create yield and drop
     import db_models
     db_models.Base.metadata.create_all(bind=test_engine)
     session = TestSessionLocal()
@@ -83,41 +83,40 @@ def fake_redis():
     return FakeRedis()
 
 @pytest.fixture()
-def test_client(app_module, db_session, fake_redis, monkeypatch): # it is wired to test db, redis and no rate limiting.
+def test_client(test_app_module, test_db_session, fake_redis, monkeypatch): # it is wired to test db, redis and no rate limiting.
     import database
     def override_get_db():
         try:
-            yield db_session
+            yield test_db_session
         finally:
             pass  # db_session fixture owns closing this
-    app_module.app.dependency_overrides[database.get_db] = override_get_db
+    test_app_module.app.dependency_overrides[database.get_db] = override_get_db
     import auth
     monkeypatch.setattr(auth, "redis_cli", fake_redis)
-    app_module.limiter.enabled = False
+    test_app_module.limiter.enabled = False
 
-    with TestClient(app_module.app) as c:
+    with TestClient(test_app_module.app) as c:
         yield c
-    app_module.app.dependency_overrides.clear()
+    test_app_module.app.dependency_overrides.clear()
 
 #region User & auth
 @pytest.fixture()
-def test_make_user(db_session, app_module): # for test it creates a User row and returns it, using the real password hasher.
+def test_make_user(test_db_session, test_app_module): # for test it creates a User row and returns it, using the real password hasher.
     import auth as auth_module
     from db_models import User
     created = []
 
     def _make(email="user@example.com", password="correct-password"):
         user = User(email=email, h_pass=auth_module.hasher.hash(password))
-        db_session.add(user)
-        db_session.commit()
-        db_session.refresh(user)
+        test_db_session.add(user)
+        test_db_session.commit()
+        test_db_session.refresh(user)
         created.append(user)
         return user
     return _make
 
 @pytest.fixture()
-def test_auth_cookies(app_module): # dict of cookies to attach to a client request using the app token creation logic.
-    """Factory fixture: auth_cookies(user) -> , """
+def test_auth_cookies(test_app_module): # dict of cookies to attach to a client request using the app token creation logic.
     import auth as auth_module
     def _cookies(user):
         access = auth_module.create_token(
