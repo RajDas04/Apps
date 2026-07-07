@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 from database import Base
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean, UniqueConstraint
 from datetime import datetime, timezone
 
 class User(Base): # to store user info
@@ -12,6 +12,7 @@ class User(Base): # to store user info
 
 class Product(Base): # to view and put product details under user
     __tablename__ = "products"
+    __table_args__ = (UniqueConstraint("user_id", "data_id", name="unique_product_user_data_id"),) # this will ensure non-duplicate products for same user and rollback on IntregrityError
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"))

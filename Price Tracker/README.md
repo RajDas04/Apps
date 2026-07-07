@@ -84,6 +84,9 @@ A full-stack web application that autonomously monitors Flipkart product prices,
     │
     ├── tests/
     │   ├── Work in Progress
+    │   ├── __init__.py
+    │   ├── conftest.py
+    │   ├── test_product_flow.py
     │   └── test_auth.py
     │
     ├── .dockerignore

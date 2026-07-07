@@ -15,7 +15,7 @@ def test_add_product_success(test_client, test_make_user, test_auth_cookies):
     assert body["name"] == "Widget"
     assert body["search_q"] == "Widget"  # crud.create_product always sets search_q = name
 
-def test_get_products(test_client, test_make_user, test_auth_cookies): # requires auth, returns only the user's products.
+def test_get_products(test_client, test_make_user, test_auth_cookies): # requires auth, returns only the user's products
     owner = test_make_user(email="owner@example.com")
     other = test_make_user(email="other@example.com")
     test_client.post("/products", json={"name": "Owner Widget", "data_id": "a1"}, cookies=test_auth_cookies(owner))
@@ -25,13 +25,13 @@ def test_get_products(test_client, test_make_user, test_auth_cookies): # require
     names = [p["name"] for p in resp.json()]
     assert names == ["Owner Widget"]
 
-def test_get_products(test_client, test_make_user, test_auth_cookies): # for new user, returns empty list.
+def test_get_products(test_client, test_make_user, test_auth_cookies): # for new user, returns empty list
     user = test_make_user()
     resp = test_client.get("/products", cookies=test_auth_cookies(user))
     assert resp.status_code == 200
     assert resp.json() == []
 
-def test_delete_products(test_client, test_make_user, test_auth_cookies): # for user, deletes their own product and returns successful.
+def test_delete_products(test_client, test_make_user, test_auth_cookies): # for user, deletes their own product and returns successful
     user = test_make_user()
     cookies = test_auth_cookies(user)
     created = test_client.post(
@@ -42,7 +42,7 @@ def test_delete_products(test_client, test_make_user, test_auth_cookies): # for 
     remaining = test_client.get("/products", cookies=cookies).json()
     assert remaining == []
 
-def test_delete_product_another_user_returns_404(test_client, test_make_user, test_auth_cookies): # it should filter and return 404, not 403, and the product should remain in the DB.
+def test_delete_product_another_user_returns_404(test_client, test_make_user, test_auth_cookies): # it should filter and return 404, not 403, and the product should remain in the DB
     owner = test_make_user(email="owner@example.com")
     attacker = test_make_user(email="badguy@example.com")
     created = test_client.post(
@@ -53,7 +53,7 @@ def test_delete_product_another_user_returns_404(test_client, test_make_user, te
     still_there = test_client.get("/products", cookies=test_auth_cookies(owner)).json()
     assert len(still_there) == 1
 
-def test_delete_nonexistent_product_returns_404(test_client, test_make_user, test_auth_cookies): # it should return 404 for a product ID that doesn't exist, even the auth user.
+def test_delete_nonexistent_product_returns_404(test_client, test_make_user, test_auth_cookies): # it should return 404 for a product ID that doesn't exist, even the auth user
     user = test_make_user()
     resp = test_client.delete("/products/999999", cookies=test_auth_cookies(user))
     assert resp.status_code == 404
@@ -62,7 +62,7 @@ def test_delete_product_requires_auth(test_client):
     resp = test_client.delete("/products/1")
     assert resp.status_code == 401
 
-def test_add_product_also_creates_auto_alert(test_client, test_make_user, test_auth_cookies, test_db_session): # it create alert with product, can only be verified by querying the DB directly.
+def test_add_product_also_creates_auto_alert(test_client, test_make_user, test_auth_cookies, test_db_session): # it create alert with product, can only be verified by querying the DB directly
     from db_models import Alert
     user = test_make_user()
     created = test_client.post(
@@ -84,32 +84,46 @@ def test_delete_product_success(test_client, test_make_user, test_auth_cookies):
     assert resp.status_code == 204
     assert resp.headers.get("HX-Redirect") == "/dashboard?deleted=1"
 
-def test_delete_product_404(test_client, test_make_user, test_auth_cookies): # it doesn't include hx-redirect header, on 404 it should not leak through from the response object that was mutated before.
+def test_delete_product_404(test_client, test_make_user, test_auth_cookies): # it doesn't include hx-redirect header, on 404 it should not leak through from the response object that was mutated before
     user = test_make_user()
     resp = test_client.delete("/products/999999", cookies=test_auth_cookies(user))
     assert resp.status_code == 404
     assert "HX-Redirect" not in resp.headers
 
-def test_add_product_missing_data_id(test_client, test_make_user, test_auth_cookies): # it should return 422.
+def test_add_product_missing_data_id(test_client, test_make_user, test_auth_cookies): # it should return 422
     user = test_make_user()
     resp = test_client.post("/products", json={"name": "Widget"}, cookies=test_auth_cookies(user))
     assert resp.status_code == 422
 
 
-def test_add_product_missing_name(test_client, test_make_user, test_auth_cookies): # it should return 422.
+def test_add_product_missing_name(test_client, test_make_user, test_auth_cookies): # it should return 422
     user = test_make_user()
     resp = test_client.post("/products", json={"data_id": "abc123"}, cookies=test_auth_cookies(user))
     assert resp.status_code == 422
 
 
-def test_add_duplicate_product(test_client, test_make_user, test_auth_cookies):
+def test_add_duplicate_product(test_client, test_make_user, test_auth_cookies, test_db_session): # it should return 400 and not create a duplicate product or alert
+    from db_models import Alert
     user = test_make_user()
     cookies = test_auth_cookies(user)
     payload = {"name": "Widget", "data_id": "same-id"}
     first = test_client.post("/products", json=payload, cookies=cookies)
     second = test_client.post("/products", json=payload, cookies=cookies)
     assert first.status_code == 200
-    assert second.status_code == 200
+    assert second.status_code == 400
+    assert second.json()["detail"] == "Product already registered."
     all_products = test_client.get("/products", cookies=cookies).json()
-    assert len(all_products) == 2
-    # its a design choice that the app allows duplicate products for the same user, the test is here to document current behavior, not desired behavior.
+    assert len(all_products) == 1
+    alerts = test_db_session.query(Alert).filter(Alert.product_id == all_products[0]["id"]).all()
+    assert len(alerts) == 1 # the failed second attempt must not leave an orphan alert behind, so there should be exactly one alert not zero or two
+
+def test_add_same_data(test_client, test_make_user, test_auth_cookies): # it should allow same data_id for different users, because the UniqueConstraint is scoped per-user not global, two people can track the same product independently
+    user_x = test_make_user(email="x@example.com")
+    user_y = test_make_user(email="y@example.com")
+    payload = {"name": "Widget", "data_id": "shared-id"}
+ 
+    response_x = test_client.post("/products", json=payload, cookies=test_auth_cookies(user_x))
+    response_y = test_client.post("/products", json=payload, cookies=test_auth_cookies(user_y))
+ 
+    assert response_x.status_code == 200
+    assert response_y.status_code == 200

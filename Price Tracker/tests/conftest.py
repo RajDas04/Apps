@@ -1,39 +1,5 @@
-"""
-Shared fixtures for the whole test suite.
-
-Handles four import-time/runtime hazards found in this codebase that would
-otherwise make tests flaky, slow, or dangerous to run:
-
-1. `database.py` builds a real SQLAlchemy engine from settings.database_url
-   at import time, and `main.py` calls Base.metadata.create_all(bind=engine)
-   at import time too. Left alone, importing main for TestClient would
-   create tables in whatever DB your .env points at. We override get_db
-   with a throwaway in-memory SQLite engine before any test touches the DB.
-
-2. `auth.py` builds `redis_cli = redis.from_url(...)` at import time and
-   uses it synchronously inside request handlers (OTP register/verify).
-   Without a real Redis running, these calls raise redis.exceptions.
-   ConnectionError. We monkeypatch auth.redis_cli with an in-memory fake.
-
-3. Two endpoints (/auth/signin/request at 3/min, /auth/refresh/cookie at
-   10/min) are rate-limited via slowapi. Confirmed directly from the
-   installed slowapi source: Limiter checks `self.enabled` at request time
-   (slowapi/extension.py), so setting app.state.limiter.enabled = False
-   disables limiting for the whole test session without touching route code.
-
-4. main.py imports scraper.py, tasks.py, and notify.py at module level.
-   Those files weren't part of what was reviewed, and even if they exist
-   in the real repo, tests must never trigger real scraping, real Celery
-   dispatch, or real emails. This conftest doesn't stub them — that's done
-   at the environment level (see README note in the test package) — but
-   if you run this suite and imports fail here, that's almost certainly why.
-
-Run with your working directory set to the project root (so relative
-"templates"/"static" paths in main.py resolve), and with a .env file (or
-exported env vars) satisfying every field in config.Settings — pydantic
-raises at import time otherwise, before pytest even collects tests.
-"""
-
+"""Shared fixtures for the whole tests,
+To handle some import-time/runtime hazards found in this codebase that would otherwise make tests unstable to run."""
 from datetime import timedelta
 import pytest, sys, os
 from fastapi.testclient import TestClient
@@ -62,7 +28,7 @@ class FakeRedis:
 
 #region App & db fixtures
 @pytest.fixture(scope="session")
-def test_app_module(): # import main.py exactly once per test session, after sys.path is set up.
+def test_app_module(): # import main.py exactly once per test session, after sys.path is set up
     sys.path.insert(0, os.getcwd())
     import main as main_module
     return main_module
@@ -83,7 +49,7 @@ def fake_redis():
     return FakeRedis()
 
 @pytest.fixture()
-def test_client(test_app_module, test_db_session, fake_redis, monkeypatch): # it is wired to test db, redis and no rate limiting.
+def test_client(test_app_module, test_db_session, fake_redis, monkeypatch): # it is wired to test db, redis and no rate limiting
     import database
     def override_get_db():
         try:
@@ -101,7 +67,7 @@ def test_client(test_app_module, test_db_session, fake_redis, monkeypatch): # it
 
 #region User & auth
 @pytest.fixture()
-def test_make_user(test_db_session, test_app_module): # for test it creates a User row and returns it, using the real password hasher.
+def test_make_user(test_db_session, test_app_module): # for test it creates a User row and returns it, using the real password hasher
     import auth as auth_module
     from db_models import User
     created = []
@@ -116,7 +82,7 @@ def test_make_user(test_db_session, test_app_module): # for test it creates a Us
     return _make
 
 @pytest.fixture()
-def test_auth_cookies(test_app_module): # dict of cookies to attach to a client request using the app token creation logic.
+def test_auth_cookies(test_app_module): # dict of cookies to attach to a client request using the app token creation logic
     import auth as auth_module
     def _cookies(user):
         access = auth_module.create_token(
