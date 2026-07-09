@@ -157,7 +157,10 @@ def user_dashboard(request: Request, db: DBSession, current_user: userSession):
 
 @app.get("/dashboard/{product_id}")
 def product_detail(product_id: int, request: Request, db: DBSession, current_user: userSession):
-    product = db.query(db_models.Product).filter(db_models.Product.id == product_id).first()
+    product = db.query(db_models.Product).filter(db_models.Product.id == product_id,
+                                                 db_models.Product.user_id == current_user["id"]).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found") # this is to prevent attackers from leaking data about other users products
     prices = db.query(db_models.PriceHistory)\
         .filter(db_models.PriceHistory.product_id == product_id)\
         .order_by(db_models.PriceHistory.scraped_at)\
@@ -167,8 +170,7 @@ def product_detail(product_id: int, request: Request, db: DBSession, current_use
         "prices": [p.price for p in prices],
         "mrps": [p.mrp for p in prices]
     }
-    return templates.TemplateResponse("user_dashboard/product.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "user_dashboard/product.html", {
         "product": product,
         "chart_data": chart_data,
         "prices": prices,
