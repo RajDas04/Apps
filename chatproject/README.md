@@ -1,7 +1,7 @@
 # StarPulse
 A real-time chat application with private rooms and granular access control. Built to demonstrate full-stack Django development with WebSocket-powered messaging, a custom permission system and production deployment on Render.
 
-### [Live Demo](https://starpulse.onrender.com)
+### [Live Demo](https://apps-i5vf.onrender.com)
 
 ## Key Features
 **Private Chat Rooms**
